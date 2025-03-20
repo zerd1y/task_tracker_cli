@@ -12,7 +12,7 @@ public class Task {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HHmmss");
 
     public Task(String description) {
         this.id = ++lastId;
@@ -42,20 +42,22 @@ public class Task {
     }
 
     public String toJson() {
-        return "{\"id\":\"" + id + "\"," +
-                "\"description\":\"" + description.strip() + "\"," +
-                "\"status\":\"" + status.toString() + "\"," +
-                "\"createdAt\":\"" + createdAt.format(formatter) + "\"," +
-                "\"updatedAt\":\"" + updatedAt.format(formatter) + "\"}";
+        return "{\"id\":\"" + id + "\",\"description\":\"" + description.strip() + "\",\"status\":\"" + status.toString() +
+                "\",\"createdAt\":\"" + createdAt.format(formatter) + "\",\"updatedAt\":\"" + updatedAt.format(formatter) + "\"}";
     }
 
     public static Task fromJson(String json) {
-        json = json.replace("{", "").replace("}", "").replace("\"", "");
+        json = json.strip();
+        json = json.replace("[", "").replace("]", "").replace("{", "").replace("}", "").replace("\"", "");
         String[] parts = json.split(",");
+
+        if (parts.length < 5) {
+            throw new IllegalArgumentException("Invalid JSON format: missing fields -> " + json);
+        }
 
         String id = parts[0].split(":")[1].strip();
         String description = parts[1].split(":")[1].strip();
-        String statusString = parts[2].split(":")[1].strip();
+        String statusString =  parts[2].split(":")[1].strip();
         String createdAtStr = parts[3].split(":")[1].strip();
         String updatedAtStr = parts[4].split(":")[1].strip();
 
@@ -67,8 +69,8 @@ public class Task {
         task.createdAt = LocalDateTime.parse(createdAtStr, formatter);
         task.updatedAt = LocalDateTime.parse(updatedAtStr, formatter);
 
-        if (Integer.parseInt(id) > lastId) {
-            lastId = Integer.parseInt(id);
+        if (task.id > lastId) {
+            lastId = task.id;
         }
 
         return task;
